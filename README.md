@@ -106,6 +106,3 @@ python -m pyshacl -s fsl-swebok-shapes.ttl fsl-swebok.ttl
 - Poveda-Villalón, M. et al. (2022). *LOT: An Industrial Oriented Ontology Engineering Framework.* Eng. Appl. of AI 111.
 - Miles, A. & Bechhofer, S. (2009). *SKOS Simple Knowledge Organization System Reference.* W3C Recommendation.
 
-## Author
-
-[Your Name] — [Course / Seminar], University of Koblenz, [Date].
