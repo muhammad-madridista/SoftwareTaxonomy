@@ -1,0 +1,213 @@
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix tbox:  <http://www.softlang.org/ontologies/tbox#> .
+@prefix ce:    <http://www.softlang.org/ontologies/ce#> .
+@prefix ka:    <http://www.softlang.org/ontologies/ka#> .
+
+#################################################################
+#  FSL x SWEBOK V4 integration module
+#
+#  Adds SWEBOK V4 Knowledge Areas to FSL as a SECOND classification
+#  facet, orthogonal to FSL's lifecycle-based EngineeringActivity tree.
+#
+#  ==> VERIFY BEFORE SUBMITTING:
+#      - The namespace separator ('#' vs '/') against the real FSL repo.
+#      - The exact IRIs of FSL's lifecycle activities and SubjectArea
+#        individuals. The STUBS section below is a standalone placeholder
+#        so this file loads on its own in Protege. Replace the stubs with
+#        `owl:imports <http://www.softlang.org/ontologies/tbox>` (and the
+#        relevant ABox modules) once you have wired it to the real FSL.
+#################################################################
+
+<http://www.softlang.org/ontologies/ka> a owl:Ontology ;
+    rdfs:comment "Integration of the SWEBOK V4 Knowledge Areas into FSL as a knowledge-area facet, aligned to the FSL lifecycle-based SE activity taxonomy via SKOS mappings and object properties."@en .
+    # owl:imports <http://www.softlang.org/ontologies/tbox> .   # <-- enable against real FSL
+
+#################################################################
+#  STUBS  (delete once you import the real FSL modules)
+#################################################################
+
+tbox:ConceptualEntity   a owl:Class .
+tbox:EngineeringActivity a owl:Class ; rdfs:subClassOf tbox:ConceptualEntity .
+tbox:SubjectArea        a owl:Class ; rdfs:subClassOf tbox:ConceptualEntity .
+
+# Lifecycle activities (FSL top-level SE activities). Verify IRIs/module.
+ce:Requirements  a owl:Class ; rdfs:subClassOf tbox:EngineeringActivity .
+ce:Design        a owl:Class ; rdfs:subClassOf tbox:EngineeringActivity .
+ce:Implementation a owl:Class ; rdfs:subClassOf tbox:EngineeringActivity .
+ce:Testing       a owl:Class ; rdfs:subClassOf tbox:EngineeringActivity .
+ce:Deployment    a owl:Class ; rdfs:subClassOf tbox:EngineeringActivity .
+ce:Maintenance   a owl:Class ; rdfs:subClassOf tbox:EngineeringActivity .
+
+# Subject areas (from FSL seed set, Table 3). Verify IRIs.
+ce:SE  a tbox:SubjectArea ; rdfs:label "Software Engineering" .
+ce:TCS a tbox:SubjectArea ; rdfs:label "Theoretical Computer Science" .
+ce:FM  a tbox:SubjectArea ; rdfs:label "Formal Methods" .
+
+#################################################################
+#  TBOX  — the KnowledgeArea facet
+#################################################################
+
+tbox:KnowledgeArea a owl:Class ;
+    rdfs:subClassOf tbox:ConceptualEntity ;
+    rdfs:comment "A SWEBOK V4 knowledge area: a domain of software-engineering knowledge. Orthogonal to the lifecycle axis used by tbox:EngineeringActivity."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_Engineering_Body_of_Knowledge> .
+
+# The four buckets from the deviation analysis, as subclasses.
+# Encoding the buckets in OWL is what makes the argument checkable by SHACL.
+
+tbox:LifecycleAlignedKnowledgeArea a owl:Class ;
+    rdfs:subClassOf tbox:KnowledgeArea ;
+    rdfs:comment "A KA that corresponds to a phase of the software lifecycle and can be aligned to an FSL EngineeringActivity."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Systems_development_life_cycle> .
+
+tbox:CrossCuttingKnowledgeArea a owl:Class ;
+    rdfs:subClassOf tbox:KnowledgeArea ;
+    rdfs:comment "A KA that spans multiple lifecycle phases and therefore has no single parent activity in the FSL tree."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Cross-cutting_concern> .
+
+tbox:FoundationKnowledgeArea a owl:Class ;
+    rdfs:subClassOf tbox:KnowledgeArea ;
+    rdfs:comment "A KA that captures underlying knowledge (computing, mathematical, engineering) rather than an SE activity; aligns to a SubjectArea, not an activity."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Computer_science> .
+
+tbox:ProfessionalKnowledgeArea a owl:Class ;
+    rdfs:subClassOf tbox:KnowledgeArea ;
+    rdfs:comment "A KA about professional/economic practice; neither an activity nor a foundation. Reveals an FSL coverage gap."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_engineering_professional_practice> .
+
+# Optional: make the buckets disjoint (uncomment to enforce; check reasoner stays consistent)
+# [] a owl:AllDisjointClasses ;
+#    owl:members ( tbox:LifecycleAlignedKnowledgeArea tbox:CrossCuttingKnowledgeArea
+#                  tbox:FoundationKnowledgeArea tbox:ProfessionalKnowledgeArea ) .
+
+#################################################################
+#  Property — activity addresses knowledge area (the cross-cutting link)
+#################################################################
+
+tbox:addressesKnowledgeArea a owl:ObjectProperty ;
+    rdfs:domain tbox:EngineeringActivity ;
+    rdfs:range  tbox:KnowledgeArea ;
+    rdfs:comment "Relates an FSL SE activity to a SWEBOK knowledge area whose concerns it exercises. Used to attach cross-cutting KAs to the many activities they span."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_Engineering_Body_of_Knowledge> ;
+    owl:inverseOf tbox:isKnowledgeAreaOf .
+
+tbox:isKnowledgeAreaOf a owl:ObjectProperty ;
+    rdfs:domain tbox:KnowledgeArea ;
+    rdfs:range  tbox:EngineeringActivity ;
+    rdfs:comment "Inverse of tbox:addressesKnowledgeArea."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_Engineering_Body_of_Knowledge> .
+
+#################################################################
+#  ABOX  — the 18 SWEBOK V4 Knowledge Areas
+#  Note: punning is used (each KA is an individual AND may classify),
+#  consistent with FSL's OWL 2 Punning Enforcement (OPE).
+#################################################################
+
+### (a) Lifecycle-aligned KAs -> SKOS alignment to FSL activities #########
+
+ka:SoftwareRequirements a tbox:LifecycleAlignedKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: eliciting, analysing, specifying, validating requirements."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_requirements> ;
+    skos:closeMatch ce:Requirements .
+
+ka:SoftwareDesign a tbox:LifecycleAlignedKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: software design."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_design> ;
+    skos:closeMatch ce:Design .
+
+ka:SoftwareArchitecture a tbox:LifecycleAlignedKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA (new in V4): software architecture. Broader-than / split from design in FSL terms."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_architecture> ;
+    skos:broadMatch ce:Design .
+
+ka:SoftwareConstruction a tbox:LifecycleAlignedKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: construction (coding, unit/integration testing, debugging)."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_construction> ;
+    skos:closeMatch ce:Implementation .
+
+ka:SoftwareTesting a tbox:LifecycleAlignedKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: dynamic validation via test cases."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_testing> ;
+    skos:closeMatch ce:Testing .   # <-- verify FSL actually has a Testing activity
+
+ka:SoftwareMaintenance a tbox:LifecycleAlignedKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: maintenance."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_maintenance> ;
+    skos:closeMatch ce:Maintenance .
+
+ka:SoftwareEngineeringOperations a tbox:LifecycleAlignedKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA (new in V4): operations, deployment, DevOps."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/DevOps> ;
+    skos:broadMatch ce:Deployment .
+
+### (b) Cross-cutting KAs -> attached to MANY activities ##################
+#   YOUR TURN: extend these assertions with your own justified coverage.
+#   Below is a representative (not exhaustive) starter for each KA.
+
+ka:SoftwareConfigurationManagement a tbox:CrossCuttingKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: identification, control, status, audit of configuration items across the whole lifecycle."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_configuration_management> .
+ce:Implementation tbox:addressesKnowledgeArea ka:SoftwareConfigurationManagement .
+ce:Maintenance    tbox:addressesKnowledgeArea ka:SoftwareConfigurationManagement .
+
+ka:SoftwareEngineeringManagement a tbox:CrossCuttingKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: planning, coordination, measurement, control of SE work."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_engineering_management> .
+ce:Requirements tbox:addressesKnowledgeArea ka:SoftwareEngineeringManagement .
+ce:Design       tbox:addressesKnowledgeArea ka:SoftwareEngineeringManagement .
+
+ka:SoftwareEngineeringProcess a tbox:CrossCuttingKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: definition, assessment, improvement of SE processes."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_engineering_process> .
+ce:Requirements tbox:addressesKnowledgeArea ka:SoftwareEngineeringProcess .
+ce:Maintenance  tbox:addressesKnowledgeArea ka:SoftwareEngineeringProcess .
+
+ka:SoftwareQuality a tbox:CrossCuttingKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: quality attributes, assurance, verification across phases."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_quality> .
+ce:Design         tbox:addressesKnowledgeArea ka:SoftwareQuality .
+ce:Implementation tbox:addressesKnowledgeArea ka:SoftwareQuality .
+
+ka:SoftwareSecurity a tbox:CrossCuttingKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA (new in V4): security across requirements, design, construction, operations."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_security> .
+ce:Requirements   tbox:addressesKnowledgeArea ka:SoftwareSecurity .
+ce:Implementation tbox:addressesKnowledgeArea ka:SoftwareSecurity .
+
+ka:SoftwareEngineeringModelsAndMethods a tbox:CrossCuttingKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: modelling notations and methods applied across activities."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_development_process> .
+ce:Design       tbox:addressesKnowledgeArea ka:SoftwareEngineeringModelsAndMethods .
+ce:Requirements tbox:addressesKnowledgeArea ka:SoftwareEngineeringModelsAndMethods .
+
+### (c) Professional KAs -> no activity counterpart (coverage gap) ########
+
+ka:SoftwareEngineeringProfessionalPractice a tbox:ProfessionalKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: professionalism, ethics, group dynamics, communication. Not an FSL activity."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_engineering_professional_practice> .
+
+ka:SoftwareEngineeringEconomics a tbox:ProfessionalKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: economic decision-making for SE. Not an FSL activity."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Software_engineering_economics> .
+
+### (d) Foundation KAs -> aligned to FSL SubjectArea, not activities ######
+
+ka:ComputingFoundations a tbox:FoundationKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: computing foundations (incl. AI/ML in V4)."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Computer_science> ;
+    skos:relatedMatch ce:TCS .
+
+ka:MathematicalFoundations a tbox:FoundationKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: mathematical foundations."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Mathematics> ;
+    skos:relatedMatch ce:FM .
+
+ka:EngineeringFoundations a tbox:FoundationKnowledgeArea ;
+    rdfs:comment "SWEBOK V4 KA: engineering foundations."@en ;
+    foaf:isPrimaryTopicOf <https://en.wikipedia.org/wiki/Engineering> ;
+    skos:relatedMatch ce:SE .

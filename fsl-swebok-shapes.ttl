@@ -1,0 +1,59 @@
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix tbox:  <http://www.softlang.org/ontologies/tbox#> .
+@prefix kash:  <http://www.softlang.org/ontologies/ka/shapes#> .
+
+#################################################################
+#  SHACL shapes for the FSL x SWEBOK integration.
+#  Mirrors FSL's Phase 9 goal SBV (Shape-Based Validation).
+#  Run with pyshacl:  pyshacl -s fsl-swebok-shapes.ttl fsl-swebok.ttl
+#################################################################
+
+# Every KA must be documented and linked (mirrors FSL's comment + FOAF-link shapes)
+kash:KnowledgeAreaMustBeDocumentedShape a sh:NodeShape ;
+    sh:targetClass tbox:KnowledgeArea ;
+    sh:property [
+        sh:path rdfs:comment ;
+        sh:minCount 1 ;
+        sh:message "Every knowledge area must have an rdfs:comment."@en ;
+    ] ;
+    sh:property [
+        sh:path foaf:isPrimaryTopicOf ;
+        sh:minCount 1 ;
+        sh:message "Every knowledge area must be linked to an external resource (KRL)."@en ;
+    ] .
+
+# A cross-cutting KA must actually cross-cut: reached from >= 2 activities.
+kash:CrossCuttingKAMustSpanActivitiesShape a sh:NodeShape ;
+    sh:targetClass tbox:CrossCuttingKnowledgeArea ;
+    sh:property [
+        sh:path [ sh:inversePath tbox:addressesKnowledgeArea ] ;
+        sh:minCount 2 ;
+        sh:message "A cross-cutting KA must be addressed by at least two SE activities; otherwise it is not cross-cutting."@en ;
+    ] .
+
+# A lifecycle-aligned KA must have exactly the intended kind of SKOS alignment.
+kash:LifecycleKAMustAlignShape a sh:NodeShape ;
+    sh:targetClass tbox:LifecycleAlignedKnowledgeArea ;
+    sh:or (
+        [ sh:property [ sh:path skos:closeMatch ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path skos:broadMatch ; sh:minCount 1 ] ]
+    ) ;
+    sh:message "A lifecycle-aligned KA must SKOS-align (closeMatch/broadMatch) to an FSL activity."@en .
+
+# A foundation KA must relate to a SubjectArea, never to an activity.
+kash:FoundationKAMustRelateToAreaShape a sh:NodeShape ;
+    sh:targetClass tbox:FoundationKnowledgeArea ;
+    sh:property [
+        sh:path skos:relatedMatch ;
+        sh:minCount 1 ;
+        sh:message "A foundation KA must relate to a SubjectArea via skos:relatedMatch."@en ;
+    ] ;
+    sh:property [
+        sh:path [ sh:inversePath tbox:addressesKnowledgeArea ] ;
+        sh:maxCount 0 ;
+        sh:message "A foundation KA must NOT be modelled as an addressed activity concern."@en ;
+    ] .

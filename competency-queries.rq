@@ -1,0 +1,48 @@
+# Competency-question SPARQL queries for the FSL x SWEBOK integration.
+# Mirrors FSL's Phase 9 goal QBR (Query-Based Reporting).
+# Each block is a separate query; run individually.
+
+PREFIX tbox: <http://www.softlang.org/ontologies/tbox#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+# --------------------------------------------------------------------
+# CQ1: Which SE activities address a given cross-cutting concern
+#      (here: configuration management)?
+# --------------------------------------------------------------------
+SELECT ?activity WHERE {
+  ?activity tbox:addressesKnowledgeArea
+            <http://www.softlang.org/ontologies/ka#SoftwareConfigurationManagement> .
+}
+
+# --------------------------------------------------------------------
+# CQ2: Which SWEBOK KAs have NO aligned FSL activity?
+#      (the coverage-gap report: professional + foundation KAs, and any
+#       lifecycle KA you forgot to align)
+# --------------------------------------------------------------------
+# SELECT ?ka WHERE {
+#   ?ka rdf:type/rdfs:subClassOf* tbox:KnowledgeArea .
+#   FILTER NOT EXISTS { ?ka skos:closeMatch|skos:broadMatch ?activity .
+#                       ?activity rdfs:subClassOf* tbox:EngineeringActivity . }
+#   FILTER NOT EXISTS { ?a tbox:addressesKnowledgeArea ?ka . }
+# }
+
+# --------------------------------------------------------------------
+# CQ3: For each lifecycle-aligned KA, show the FSL activity it maps to
+#      and the mapping strength (close vs broad).
+# --------------------------------------------------------------------
+# SELECT ?ka ?rel ?activity WHERE {
+#   ?ka rdf:type tbox:LifecycleAlignedKnowledgeArea .
+#   ?ka ?rel ?activity .
+#   FILTER (?rel IN (skos:closeMatch, skos:broadMatch))
+# }
+
+# --------------------------------------------------------------------
+# CQ4: How many KAs fall in each bucket? (quantitative summary table,
+#      in the style of the paper's Section 3 tables)
+# --------------------------------------------------------------------
+# SELECT ?bucket (COUNT(?ka) AS ?n) WHERE {
+#   ?ka rdf:type ?bucket .
+#   ?bucket rdfs:subClassOf tbox:KnowledgeArea .
+# } GROUP BY ?bucket
